@@ -55,21 +55,9 @@ public class MainActivity extends AppCompatActivity {
         int res = initRing();
         byte[] v = randomBytes(10);
 
-        byte[] key =
-                stringToHex("0123456789ABCDEF0123456789ABCDE0");
-        byte[] enc = encrypt(key,
-                stringToHex("000000000000000102"));
-        byte[] dec = decrypt(key, enc);
-        String s = new String(Hex.encodeHex(dec)).toUpperCase();
-        Log.i("DEC: ", s);
-        Toast.makeText(this, "Hello", Toast.LENGTH_SHORT).show();
 
-        // Example of a call to a native method
-//        TextView tv = binding.sampleText;
-//        tv.setText(stringFromJNI());
-        Intent it = new Intent(this, PinpadActivity.class);
-        //startActivity(it);
-        activityResultLauncher.launch(it);
+//        Intent it = new Intent(this, PinpadActivity.class);
+//        activityResultLauncher.launch(it);
     }
 
 
@@ -89,8 +77,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClick (View v)
     {
-        Toast.makeText(this, "Hello",
-                Toast.LENGTH_SHORT).show();
+        Intent it = new Intent(this, PinpadActivity.class);
+        activityResultLauncher.launch(it);
     }
     /**
      * A native method that is implemented by the 'myapplication' native library,
