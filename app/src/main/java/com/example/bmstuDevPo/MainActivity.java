@@ -19,11 +19,9 @@ import com.example.bmstuDevPo.databinding.ActivityMainBinding;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
-import java.text.DecimalFormat;
 
 public class MainActivity extends AppCompatActivity implements TransactionEvents {
     ActivityResultLauncher activityResultLauncher;
-
     // Used to load the 'myapplication' library on application startup.
     static {
         System.loadLibrary("bmstuDevPo");
@@ -31,11 +29,11 @@ public class MainActivity extends AppCompatActivity implements TransactionEvents
     }
 
     private ActivityMainBinding binding;
+    private String pin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i("sdf", "sdf");
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -46,10 +44,6 @@ public class MainActivity extends AppCompatActivity implements TransactionEvents
                     public void onActivityResult(ActivityResult result) {
                         if (result.getResultCode() == Activity.RESULT_OK) {
                             Intent data = result.getData();
-                            // обработка результата
-                            //String pin = data.getStringExtra("pin");
-                            //Toast.makeText(MainActivity.this, pin,
-                            //        Toast.LENGTH_SHORT).show();
                             pin = data.getStringExtra("pin");
                             synchronized (MainActivity.this) {
                                 MainActivity.this.notifyAll();
@@ -59,13 +53,27 @@ public class MainActivity extends AppCompatActivity implements TransactionEvents
                 });
 
         int res = initRing();
+        if (res != 0 ) {
+            Log.e("init", "error initRing");
+        }
+        //first lab
         byte[] v = randomBytes(10);
+        byte[] v1 = randomBytes(10);
+        Log.d("randomBytes_1", v.toString());
+        Log.d("randomBytes_2", v1.toString());
 
-//        Intent it = new Intent(this, PinpadActivity.class);
-//        activityResultLauncher.launch(it);
+        String beforeEncrypt = "000000000000000102";
+        Log.d("encrypt", beforeEncrypt);
+        byte[] key = stringToHex("0123456789ABCDEF0123456789ABCDE0");
+        byte[] enc = encrypt(key, stringToHex(beforeEncrypt));
+        byte[] dec = decrypt(key, enc);
+        String afterDecrypt = new String(Hex.encodeHex(dec)).toUpperCase();
+        Log.d("decrypt", afterDecrypt);
+        if (!beforeEncrypt.equals(afterDecrypt)) {
+            Log.e("decrypt", "error in compare string encrypt");
+        }
     }
 
-    private String pin;
 
     @Override
     public String enterPin(int ptc, String amount) {
@@ -78,11 +86,12 @@ public class MainActivity extends AppCompatActivity implements TransactionEvents
             try {
                 MainActivity.this.wait();
             } catch (Exception ex) {
-                //todo: log error
+                Log.e("MainActivity wait", ex.toString());
             }
         }
         return pin;
     }
+
 
     @Override
     public void transactionResult(boolean result) {
@@ -92,25 +101,22 @@ public class MainActivity extends AppCompatActivity implements TransactionEvents
     }
 
 
-    public static byte[] stringToHex(String s)
-    {
+    public void onButtonClick (View v) {
+        byte[] trd = stringToHex("9F0206000000000100");
+        transaction(trd);
+    }
+
+
+    public static byte[] stringToHex(String s) {
         byte[] hex;
-        try
-        {
+        try {
             hex = Hex.decodeHex(s.toCharArray());
-        }
-        catch (DecoderException ex)
-        {
+        } catch (DecoderException ex) {
             hex = null;
         }
         return hex;
     }
 
-    public void onButtonClick (View v)
-    {
-        byte[] trd = stringToHex("9F0206000000000100");
-        transaction(trd);
-    }
     /**
      * A native method that is implemented by the 'myapplication' native library,
      * which is packaged with this application.
@@ -121,5 +127,4 @@ public class MainActivity extends AppCompatActivity implements TransactionEvents
     public static native byte[] randomBytes(int no);
     public static native byte[] encrypt(byte[] key, byte[] data);
     public static native byte[] decrypt(byte[] key, byte[] data);
-
 }
