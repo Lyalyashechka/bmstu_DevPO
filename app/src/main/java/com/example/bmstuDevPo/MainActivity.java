@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
@@ -18,6 +17,13 @@ import com.example.bmstuDevPo.databinding.ActivityMainBinding;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.IOUtils;
+
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class MainActivity extends AppCompatActivity implements TransactionEvents {
@@ -82,7 +88,8 @@ public class MainActivity extends AppCompatActivity implements TransactionEvents
         it.putExtra("ptc", ptc);
         it.putExtra("amount", amount);
         synchronized (MainActivity.this) {
-            activityResultLauncher.launch(it);
+            //activityResultLauncher.launch(it);
+            testHttpClient();
             try {
                 MainActivity.this.wait();
             } catch (Exception ex) {
@@ -98,6 +105,38 @@ public class MainActivity extends AppCompatActivity implements TransactionEvents
         runOnUiThread(()-> {
             Toast.makeText(MainActivity.this, result ? "ok" : "failed", Toast.LENGTH_SHORT).show();
         });
+    }
+
+
+    protected void testHttpClient()
+    {
+        new Thread(() -> {
+            try {
+                HttpURLConnection uc = (HttpURLConnection)
+                        (new URL("https://www.wikipedia.org").openConnection());
+                InputStream inputStream = uc.getInputStream();
+                String html = IOUtils.toString(inputStream);
+                String title = getPageTitle(html);
+                runOnUiThread(() ->
+                {
+                    Toast.makeText(this, title, Toast.LENGTH_LONG).show();
+                });
+            } catch (Exception ex) {
+                Log.e("fapptag", "Http client fails", ex);
+            }
+        }).start();
+    }
+
+
+    protected String getPageTitle(String html) {
+        Pattern pattern = Pattern.compile("<title>(.+?)</title>", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(html);
+        String p;
+        if (matcher.find())
+            p = matcher.group(1);
+        else
+            p = "Not found";
+        return p;
     }
 
 
